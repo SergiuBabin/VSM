@@ -2,7 +2,7 @@ import java.util.*;
 
 public class ArrayMap<K, V> extends AbstractMap<K, V> {
 
-    class ArrayMapEntry<K, V> implements Map.Entry<K, V> {
+    private static class ArrayMapEntry<K, V> implements Map.Entry<K, V> {
         private K key;
         private V value;
 
@@ -27,10 +27,12 @@ public class ArrayMap<K, V> extends AbstractMap<K, V> {
             return this.value;
         }
 
+        @Override
         public String toString() {
-            return "Key = " + this.key + "  |  Value = " + this.value;
+            return  "[" + getKey() + ", " + getValue() + "]";
         }
 
+        @Override
         public boolean equals(Object o) {
             ArrayMapEntry<K, V> map = (ArrayMapEntry<K, V>) o;
             return (this.getKey() == null ?
@@ -39,95 +41,65 @@ public class ArrayMap<K, V> extends AbstractMap<K, V> {
                             map.getValue() == null : this.getValue().equals(map.getValue()));
         }
 
+        @Override
         public int hashCode() {
-            return (this.getKey() == null ? 0 : this.getKey().hashCode()) ^
-                    (this.getValue() == null ? 0 : this.getValue().hashCode());
+            return 31 * (31 + key.hashCode()) + value.hashCode();
         }
     }
-
-    private Set<Map.Entry<K, V>> entries = null;
-    private ArrayList<ArrayMapEntry<K, V>> list = null;
+    private Collection<ArrayMapEntry<K, V>> entries;
 
     public ArrayMap() {
-        list = new ArrayList<>();
+        entries = new ArrayList<>();
     }
 
+    @Override
     public V put(K key, V value) {
-        int size = list.size();
-        Map.Entry<K, V> entry = null;
-        int i = 0;
-        if (key == null) {
-            for (i = 0; i < size; i++) {
-                entry = list.get(i);
-                if (entry.getKey() == null) {
-                    break;
-                }
-            }
-        } else {
-            for (i = 0; i < size; i++) {
-                entry = list.get(i);
-                if (entry.getKey().equals(key)) {
-                    break;
-                }
+        for (ArrayMapEntry<K, V> entry : entries) {
+            if (entry.getKey().equals(key)) {
+                entry.setValue(value);
+                return value;
             }
         }
 
-        V oldValue = null;
-        if (i < size) {
-            oldValue = entry.getValue();
-            entry.setValue(value);
-        } else {
-            list.add(new ArrayMapEntry<>(key, value));
-        }
-        return oldValue;
+        entries.add(new ArrayMapEntry<K, V>(key, value));
+        return value;
     }
 
+    @Override
     public boolean containsKey(Object key) {
-        for (ArrayMapEntry<K, V> i : list) {
-            if (i.getKey() == key) {
+        for (ArrayMapEntry<K, V> i : entries) {
+            if (i.getKey().equals(key)) {
                 return true;
             }
         }
         return false;
     }
 
+    @Override
     public V get(Object key) {
-        for (ArrayMapEntry<K, V> i : list) {
-            if (i.getKey() == key) {
-                return i.getValue();
+        for (ArrayMapEntry<K, V> entry : entries) {
+            if (entry.getKey().equals(key)) {
+                return entry.getValue();
             }
         }
+
         return null;
     }
 
+    @Override
     public int size() {
-        return list.size();
+        return entries.size();
     }
 
     @Override
     public Set<Entry<K, V>> entrySet() {
-        if (entries == null) {
-            entries = new AbstractSet<>() {
-                public void clear() {
-                    list.clear();
-                }
-                @Override
-                public Iterator iterator() {
-                    return list.iterator();
-                }
+        Set<Entry<K, V>> entrySet = new HashSet<>();
 
-                @Override
-                public int size() {
-                    return list.size();
-                }
-            };
-        }
-        return entries;
+        entrySet.addAll(entries);
+
+        return entrySet;
     }
 
-    public String toString() {
-        return list.toString();
-    }
 }
 
 class Prob1 {
@@ -136,6 +108,7 @@ class Prob1 {
         map.put(1, "aaa");
         map.put(2, "saa");
         map.put(3, "saas");
+        map.put(2, "ssaasasas");
         System.out.println("Verificam...");
         System.out.println("Continutul colectiei: " + map);
         if (map.size() != 3) {
@@ -167,7 +140,5 @@ class Prob1 {
                 }
             }
         }
-
     }
-
 }
